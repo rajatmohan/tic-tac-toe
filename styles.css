@@ -1,0 +1,16 @@
+#board {
+    --widthSize: min(500px, 100%);
+    width: var(--widthSize);
+    aspect-ratio: 1;
+    display: grid;
+    grid-auto-rows: 1fr;
+}
+
+.board-cell {
+    border: 1px solid black;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    font-size: min(15em, 15vw);
+    padding: 2px;
+}
