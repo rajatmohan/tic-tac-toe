@@ -1,41 +1,139 @@
-const DisplayController = (
-    ()=> {
-        const _board = document.querySelector("#board");
+const boardSideLength = 3;
 
-        const _makeCell = (rowNo, columnNo)=> {
+const DisplayController = (
+    (boardSideLength)=> {
+        const _board = document.querySelector("#board");
+        const _boardSideLength = boardSideLength;
+        const _makeCell = (index)=> {
             const cell = document.createElement('div');
             cell.classList.add("board-cell")
+
+            cell.addEventListener('click', ()=>GameController.playerClick(index));
             return cell;
         };
 
-        const makeBoard = (boardSideLength)=>{
-            _board.style.gridTemplateColumns = `repeat(${boardSideLength}, minmax(0, 1fr))`;
-            for(let i = 0; i < boardSideLength; i++) {
-                for(let j = 0; j < boardSideLength; j++) {
-                    _board.appendChild(_makeCell(i+1, j+1));
-                }
+        const makeBoard = ()=>{
+            _board.style.gridTemplateColumns = `repeat(${_boardSideLength}, minmax(0, 1fr))`;
+            for(let i = 0; i < _boardSideLength*_boardSideLength; i++) {
+                _board.appendChild(_makeCell(i));
             }
         };
 
         const setCell = (index, sign)=> {
-            _board.querySelector(`#board > div:nth-child(${index})`).textContent = sign;
+            _board.querySelector(`#board > div:nth-child(${index+1})`).textContent = sign;
         };
+
+        const reset = () => {
+            _board.querySelectorAll('#board > div').forEach((divEle)=>{
+                divEle.textContent = '';
+            });
+        }
 
         return {
             makeBoard,
             setCell,
+            reset,
         };
     }
-)();
+)(boardSideLength);
+
+const GameController = ((boardSideLength)=> {
+    let _sign = 'X';
+    const _boardSideLength = boardSideLength;
+
+    const _toggleTurn = ()=> {
+        if(_sign == 'X') {
+            _sign = 'O';
+        }
+        else {
+            _sign = 'X';
+        }
+    };
+
+    const _checkWinConditionRow = (index) => {
+        const columnNumber = index % _boardSideLength;
+        const startCellIndex = index - columnNumber; 
+        const indexVal = GameBoard.getCell(index);
+        for(let j = 0; j < _boardSideLength; j++) {
+            if(GameBoard.getCell(startCellIndex+j) !== indexVal) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    const _checkWinConditionColumn = (index) => {
+        const columnNumber = index % _boardSideLength;
+        const startCellIndex = columnNumber;
+        const indexVal = GameBoard.getCell(index);
+        for(let i = 0; i < _boardSideLength; i++) {
+            if(GameBoard.getCell(startCellIndex+i*_boardSideLength) !== indexVal) {
+                return false;
+            }
+        }
+        return true;
+    }; 
+
+    const _checkWinConditionMajorDiagnol = (index) => {
+        const rowNumber = Math.floor(index / _boardSideLength);
+        const columnNumber = index % _boardSideLength;
+        if(rowNumber === columnNumber) {
+            const indexVal = GameBoard.getCell(index);
+            for(let i = 0, j = 0; i < _boardSideLength; i++, j++) {
+                if(GameBoard.getCell(i*_boardSideLength+j) !== indexVal) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    };
+
+    const _checkWinConditionMinorDiagnol = (index) => {
+        const rowNumber = Math.floor(index / _boardSideLength);
+        const columnNumber = index % _boardSideLength;
+        if(rowNumber + columnNumber == _boardSideLength-1) {
+            const indexVal = GameBoard.getCell(index);
+            for(let i = 0, j = _boardSideLength-1; i < _boardSideLength; i++, j--) {
+                if(GameBoard.getCell(i*_boardSideLength+j) !== indexVal) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    };
+
+    const _checkGameWinCondition = (index)=> {
+        return _checkWinConditionRow(index) || _checkWinConditionColumn(index) ||
+            _checkWinConditionMajorDiagnol(index) || _checkWinConditionMinorDiagnol(index);
+    }
+
+    const playerClick = (index) => {
+        if(GameBoard.setCell(index, _sign)) {
+            _toggleTurn();
+
+            console.log(_checkGameWinCondition(index));
+        }
+    };
+
+    return {
+        playerClick,
+    };
+    
+})(boardSideLength);
 
 const GameBoard = (
-    (boardSize) => {
-        const _boardSize = boardSize;
+    (boardSideLength) => {
+        const _boardSize = boardSideLength*boardSideLength;
         const _board = [...Array(_boardSize).fill('')];
+        DisplayController.makeBoard();
+
         const reset = ()=> {
             for(let i = 0; i < _boardSize; i++) {
                 _board[i] = '';
             }
+            DisplayController.reset();
         };
 
         const getCell = (index) => {
@@ -69,11 +167,6 @@ const GameBoard = (
             getEmptyCell,
         };
     }
-)(3*3);
-
-
-DisplayController.makeBoard(3);
-console.log(GameBoard.setCell(4, 'X'));
-
+)(boardSideLength);
 
 
