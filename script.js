@@ -4,6 +4,9 @@ const DisplayController = (
     (boardSideLength)=> {
         const _board = document.querySelector("#board");
         const _boardSideLength = boardSideLength;
+
+        const _startButton = document.querySelector("#startButton");
+
         const _makeCell = (index)=> {
             const cell = document.createElement('div');
             cell.classList.add("board-cell")
@@ -12,11 +15,12 @@ const DisplayController = (
             return cell;
         };
 
-        const makeBoard = ()=>{
+        const init = ()=>{
             _board.style.gridTemplateColumns = `repeat(${_boardSideLength}, minmax(0, 1fr))`;
             for(let i = 0; i < _boardSideLength*_boardSideLength; i++) {
                 _board.appendChild(_makeCell(i));
             }
+            _startButton.addEventListener('click', _startButtonClicked);
         };
 
         const setCell = (index, sign)=> {
@@ -29,8 +33,20 @@ const DisplayController = (
             });
         }
 
+        const _startButtonClicked = (event)=> {
+            event.preventDefault();
+            if(event.target.textContent == "Start Game") {
+                event.target.textContent = 'Restart Game';
+                GameController.startButtonClicked();
+            }
+            else {
+                event.target.textContent = 'Restart Game';
+                GameController.restartButtonClicked();
+            }
+        }
+
         return {
-            makeBoard,
+            init,
             setCell,
             reset,
         };
@@ -40,6 +56,7 @@ const DisplayController = (
 const GameController = ((boardSideLength)=> {
     let _sign = 'X';
     const _boardSideLength = boardSideLength;
+    let _state = 'GAME_NOT_STARTED';
 
     const _toggleTurn = ()=> {
         if(_sign == 'X') {
@@ -119,15 +136,31 @@ const GameController = ((boardSideLength)=> {
     };
 
     const playerClick = (index) => {
-        if(GameBoard.setCell(index, _sign)) {
+        if(this._state === "GAME_STARTED" && GameBoard.setCell(index, _sign)) {
             _toggleTurn();
             console.log(_checkGameWinCondition(index));
             console.log(_checkDrawCondition(index));
         }
     };
 
+    const startButtonClicked = ()=> {
+        this._state = "GAME_STARTED";
+    };
+
+    const restartButtonClicked = ()=> {
+        this._state = "GAME_STARTED";
+        GameBoard.reset();
+    }
+
+    const init = ()=> {
+        DisplayController.init();
+    }
+
     return {
+        init,
         playerClick,
+        startButtonClicked,
+        restartButtonClicked,
     };
     
 })(boardSideLength);
@@ -136,7 +169,6 @@ const GameBoard = (
     (boardSideLength) => {
         const _boardSize = boardSideLength*boardSideLength;
         const _board = [...Array(_boardSize).fill('')];
-        DisplayController.makeBoard();
 
         const reset = ()=> {
             for(let i = 0; i < _boardSize; i++) {
@@ -176,5 +208,7 @@ const GameBoard = (
         };
     }
 )(boardSideLength);
+
+GameController.init();
 
 
