@@ -109,11 +109,20 @@ const GameController = ((boardSideLength)=> {
             _checkWinConditionMajorDiagnol(index) || _checkWinConditionMinorDiagnol(index);
     }
 
+    const _checkDrawCondition = (index)=> {
+        if(!_checkGameWinCondition(index)) {
+            if(GameBoard.getEmptyCell().length === 0) {
+                return true;
+            }
+        }
+        return false;
+    };
+
     const playerClick = (index) => {
         if(GameBoard.setCell(index, _sign)) {
             _toggleTurn();
-
             console.log(_checkGameWinCondition(index));
+            console.log(_checkDrawCondition(index));
         }
     };
 
@@ -150,12 +159,11 @@ const GameBoard = (
         };
 
         const getEmptyCell = () => {
-            const fields = []
+            const fields = [];
             for(let i = 0; i < _boardSize; i++) {
                 if(_board[i] === '') {
                     fields.push(i);
                 }
-                _board[i] = '';
             }
             return fields;
         };
