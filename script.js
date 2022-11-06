@@ -215,7 +215,6 @@ const DisplayController = (
         const _hightLightCurrentPlayer = ()=>{
             let currentPlayer = GameController.getCurrentPlayer()
             Array.from(_playerInfo.children).forEach(child => {
-                console.log(child.dataset.sign + " " +currentPlayer.getSign())
                 if(child.dataset.sign === currentPlayer.getSign()) {
                     child.classList.add("player-active");
                 }
@@ -234,7 +233,6 @@ const DisplayController = (
             _gameEndMessageDiv.style.display = "block";
             _gameEndMessage.textContent = `Draw`;
         }
-
 
         const _playerClick = (e)=> {
             let index = parseInt(e.target.dataset.index)
@@ -276,6 +274,7 @@ const DisplayController = (
             const playerName = document.createElement('input');
             playerName.classList.add("player-info");
             playerName.setAttribute("maxLength", 15);
+            playerName.setAttribute("size", 20);
             playerName.dataset.sign = player.getSign();
             playerName.value = `${player.getName()}`;
             playerName.onkeyup = _editPlayerNameKeyUp;

@@ -1,4 +1,20 @@
+html, body {
+    height: 100%;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
 body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: antiquewhite;
+    gap: 2px;
+}
+
+main {
+    flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -6,8 +22,18 @@ body {
     gap: 10px;
 }
 
+header, footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+header {
+    height: 75px;
+}
+
 #board {
-    --widthSize: min(500px, 90vw);
+    --widthSize: min(400px, 90vw);
     width: var(--widthSize);
     aspect-ratio: 1;
     display: grid;
@@ -35,11 +61,11 @@ body {
 #playerInfoContainer {
     display: flex;
     gap: 20px;
+    flex-wrap: wrap;
 }
 
 .player-info {
     text-align: center;
-    justify-content: space-between;
     width: 20ch;
     border: 1px solid black;
     padding: 4px;
@@ -52,6 +78,7 @@ body {
 
 .player-active {
     transform: scale(1.2);
+    color: lightcoral;
 }
 
 .modal {
