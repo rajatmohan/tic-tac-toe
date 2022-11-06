@@ -19,6 +19,8 @@ body {
     border-radius: 4px;
     padding: 10px;
     background-color: #198754;
+    font-size: 20px;
+    color: whitesmoke;
 }
 
 .board-cell {
@@ -41,8 +43,10 @@ body {
     width: 20ch;
     border: 1px solid black;
     padding: 4px;
+    font-size: 18px;
     margin: 10px;
     border-radius: 4px;
+    color: whitesmoke;
     background-color: #d63384;
 }
 
@@ -73,6 +77,7 @@ body {
     -webkit-animation-duration: 2s;
     animation-name: animatetop;
     animation-duration: 2s;
+    color: whitesmoke;
 }
 
 .modal-content h3 {

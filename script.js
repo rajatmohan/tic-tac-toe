@@ -265,21 +265,21 @@ const DisplayController = (
             return cell;
         };
 
-        const _editPlayerName = (e)=> {
+        const _editPlayerNameKeyUp = (e)=> {
             let playerEdited = GameController.getAllPlayers().filter(player => player.getSign() === e.target.dataset.sign);    
             if(playerEdited.length == 1) {
-                playerEdited[0].setName(e.target.textContent);
+                playerEdited[0].setName(e.target.value);
             }
         }
 
         const _makePlayerInfo = (player)=> {
-            const playerDiv = document.createElement('div');
-            playerDiv.setAttribute("contentEditable", "true");
-            playerDiv.classList.add("player-info")
-            playerDiv.dataset.sign = player.getSign();
-            playerDiv.textContent = `${player.getName()}`;
-            playerDiv.onkeyup = _editPlayerName;
-            return playerDiv;
+            const playerName = document.createElement('input');
+            playerName.classList.add("player-info");
+            playerName.setAttribute("maxLength", 15);
+            playerName.dataset.sign = player.getSign();
+            playerName.value = `${player.getName()}`;
+            playerName.onkeyup = _editPlayerNameKeyUp;
+            return playerName;
         }
 
         const _startButtonClicked = (event)=> {
