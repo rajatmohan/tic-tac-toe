@@ -1,9 +1,24 @@
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
 #board {
-    --widthSize: min(500px, 100%);
+    --widthSize: min(500px, 90vw);
     width: var(--widthSize);
     aspect-ratio: 1;
     display: grid;
     grid-auto-rows: 1fr;
+}
+
+#startButton {
+    border: 1px solid black;
+    border-radius: 4px;
+    padding: 10px;
+    background-color: #198754;
 }
 
 .board-cell {
@@ -11,6 +26,80 @@
     justify-content: center;
     align-items: center;
     display: flex;
-    font-size: min(15em, 15vw);
+    font-size: calc(0.15*var(--widthSize));
     padding: 2px;
+}
+
+#playerInfoContainer {
+    display: flex;
+    gap: 20px;
+}
+
+.player-info {
+    text-align: center;
+    justify-content: space-between;
+    width: 20ch;
+    border: 1px solid black;
+    padding: 4px;
+    margin: 10px;
+    border-radius: 4px;
+    background-color: #d63384;
+}
+
+.player-active {
+    transform: scale(1.2);
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+}
+
+.modal-content {
+    position: relative;
+    background-color: #ffc107;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    border-radius: 4px;
+    width: min(700px, 90%) ;
+    -webkit-animation-name: animatetop;
+    -webkit-animation-duration: 2s;
+    animation-name: animatetop;
+    animation-duration: 2s;
+}
+
+.modal-content h3 {
+    text-align: center;
+    font-size: 3vw;
+}
+
+/* Add Animation */
+@-webkit-keyframes animatetop {
+    from {top:-300px; opacity:0} 
+    to {top:0; opacity:1}
+}
+
+@keyframes animatetop {
+    from {top: -300px; opacity: 0}
+    to {top: 0; opacity: 1}
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover, .close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
 }
