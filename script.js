@@ -21,15 +21,14 @@ const Player = (
 
 const GameBoard = (
     (boardSideLength) => {
-        const _boardSize = boardSideLength*boardSideLength;
+        const _boardSideLength = boardSideLength;
+        const _boardSize = _boardSideLength*_boardSideLength;
         const _board = [...Array(_boardSize).fill('')];
 
         const getBoard = () => _board;
 
-        const reset = ()=> {
-            for(let i = 0; i < _boardSize; i++) {
-                _board[i] = '';
-            }
+        const getBoardSideLength = ()=> {
+            return _boardSideLength;
         };
 
         const getCell = (index) => {
@@ -44,7 +43,15 @@ const GameBoard = (
             return false;
         };
 
-        const getEmptyCell = () => {
+        const setCellEmpty = (index)=> {
+            _board[index] = '';
+        };
+
+        const isCellEmpty = (index)=> {
+            return (_board[index] === ''? true: false );
+        };
+
+        const getEmptyCells = () => {
             const fields = [];
             for(let i = 0; i < _boardSize; i++) {
                 if(_board[i] === '') {
@@ -54,15 +61,24 @@ const GameBoard = (
             return fields;
         };
 
+        const reset = ()=> {
+            for(let i = 0; i < _boardSize; i++) {
+                _board[i] = '';
+            }
+        };
+
         return {
             getBoard,
-            reset,
+            getBoardSideLength,
             getCell,
             setCell,
-            getEmptyCell,
+            setCellEmpty,
+            isCellEmpty,
+            getEmptyCells,
+            reset,
         };
     }
-)(boardSideLength);
+);
 
 const GameController = ((boardSideLength)=> {
     const _boardSideLength = boardSideLength;
@@ -71,6 +87,10 @@ const GameController = ((boardSideLength)=> {
     let _playerList = [Player('Player 1', 'X'), Player('Player 2', 'O')];
     let _currentPlayer = _playerList[0];
 
+    let _board = GameBoard(boardSideLength);
+
+    let isMaximizer = true;
+
     const _toggleTurn = ()=> {
         _currentPlayer = (_currentPlayer === _playerList[0])? _playerList[1]: _playerList[0];
     };
@@ -78,9 +98,9 @@ const GameController = ((boardSideLength)=> {
     const _checkWinConditionRow = (index) => {
         const columnNumber = index % _boardSideLength;
         const startCellIndex = index - columnNumber; 
-        const indexVal = GameBoard.getCell(index);
+        const indexVal = _board.getCell(index);
         for(let j = 0; j < _boardSideLength; j++) {
-            if(GameBoard.getCell(startCellIndex+j) !== indexVal) {
+            if(_board.getCell(startCellIndex+j) !== indexVal) {
                 return false;
             }
         }
@@ -90,9 +110,9 @@ const GameController = ((boardSideLength)=> {
     const _checkWinConditionColumn = (index) => {
         const columnNumber = index % _boardSideLength;
         const startCellIndex = columnNumber;
-        const indexVal = GameBoard.getCell(index);
+        const indexVal = _board.getCell(index);
         for(let i = 0; i < _boardSideLength; i++) {
-            if(GameBoard.getCell(startCellIndex+i*_boardSideLength) !== indexVal) {
+            if(_board.getCell(startCellIndex+i*_boardSideLength) !== indexVal) {
                 return false;
             }
         }
@@ -103,9 +123,9 @@ const GameController = ((boardSideLength)=> {
         const rowNumber = Math.floor(index / _boardSideLength);
         const columnNumber = index % _boardSideLength;
         if(rowNumber === columnNumber) {
-            const indexVal = GameBoard.getCell(index);
+            const indexVal = _board.getCell(index);
             for(let i = 0, j = 0; i < _boardSideLength; i++, j++) {
-                if(GameBoard.getCell(i*_boardSideLength+j) !== indexVal) {
+                if(_board.getCell(i*_boardSideLength+j) !== indexVal) {
                     return false;
                 }
             }
@@ -118,9 +138,9 @@ const GameController = ((boardSideLength)=> {
         const rowNumber = Math.floor(index / _boardSideLength);
         const columnNumber = index % _boardSideLength;
         if(rowNumber + columnNumber == _boardSideLength-1) {
-            const indexVal = GameBoard.getCell(index);
+            const indexVal = _board.getCell(index);
             for(let i = 0, j = _boardSideLength-1; i < _boardSideLength; i++, j--) {
-                if(GameBoard.getCell(i*_boardSideLength+j) !== indexVal) {
+                if(_board.getCell(i*_boardSideLength+j) !== indexVal) {
                     return false;
                 }
             }
@@ -136,7 +156,7 @@ const GameController = ((boardSideLength)=> {
 
     const _checkDrawCondition = (index)=> {
         if(!_checkGameWinCondition(index)) {
-            if(GameBoard.getEmptyCell().length === 0) {
+            if(_board.getEmptyCells().length === 0) {
                 return true;
             }
         }
@@ -144,7 +164,7 @@ const GameController = ((boardSideLength)=> {
     };
 
     const playerClick = (index) => {
-        if(_state === "GAME_STARTED" && GameBoard.setCell(index, _currentPlayer.getSign())) {
+        if(_state === "GAME_STARTED" && _board.setCell(index, _currentPlayer.getSign())) {
             if(_checkGameWinCondition(index)) {
                 _state = "GAME_WON";
             }
@@ -169,12 +189,13 @@ const GameController = ((boardSideLength)=> {
 
     const startButtonClicked = ()=> {
         _state = "GAME_STARTED";
+        console.log(MiniMaxi.findBestMove(_board, isMaximizer));
     };
 
     const restartButtonClicked = ()=> {
         _state = "GAME_STARTED";
         _currentPlayer = _playerList[0];
-        GameBoard.reset();
+        _board.reset();
     }
 
     const isGameWon = ()=> {
@@ -327,6 +348,126 @@ const DisplayController = (
         };
     }
 )(boardSideLength);
+
+const MiniMaxi = ((maximizerSign)=> {
+    const PLAYER_SCORE = 10;
+    const _maximizerSign = maximizerSign;
+
+    const _getWinScore = (board, index, depth) => {
+        const score = PLAYER_SCORE - depth;
+        if(board.getCell(index) == _maximizerSign) {
+            return {score: score, isGameFinished: true};
+        }
+        else {
+            return {score: -score, isGameFinished: true};
+        }
+    };
+
+    const _evaluate = (board, depth)=> {
+        const _boardSideLength = board.getBoardSideLength();
+        
+        // check for any row for win condition
+        for(let i = 0; i < _boardSideLength; i++) {
+            let j;
+            for(j = 1; j < _boardSideLength; j++) {
+                if(board.isCellEmpty(i*_boardSideLength+j) || board.getCell(i*_boardSideLength+j) !== board.getCell(i*_boardSideLength+j-1)) {
+                    break;
+                }
+            }
+            if(j == _boardSideLength) {
+                return _getWinScore(board, i*_boardSideLength, depth);
+            }
+        }
+
+        // check for any column for win condition
+        for(let j = 0; j < _boardSideLength; j++) {
+            let i;
+            for(i = 1; i < _boardSideLength; i++) {
+                if(board.isCellEmpty(i*_boardSideLength+j) || board.getCell(i*_boardSideLength+j) !== board.getCell((i-1)*_boardSideLength+j)) {
+                    break;
+                }
+            }
+            if(i == _boardSideLength) {
+                return _getWinScore(board, j, depth);
+            }
+        }
+
+        // check for major diagnol for win condition
+        {
+            let majorDiagWin = true;
+            for(let i = 1, j = 1; i < _boardSideLength; i++, j++) {
+                if(board.isCellEmpty(i*_boardSideLength+j) || board.getCell(i*_boardSideLength+j) !== board.getCell((i-1)*_boardSideLength+j-1)) {
+                    majorDiagWin = false;
+                    break;
+                }
+            }
+            if(majorDiagWin) {
+                return _getWinScore(board, 0, depth);
+            }
+        }
+            
+        //check for minor diagnol
+        {
+            let minorDiagWin = true;
+            for(let i = 1, j = _boardSideLength-2; i < _boardSideLength; i++, j--) {
+                if(board.isCellEmpty(i*_boardSideLength+j) || board.getCell(i*_boardSideLength+j) !== board.getCell((i-1)*_boardSideLength+j+1)) {
+                    minorDiagWin = false;
+                    break;
+                }
+            }
+            if(minorDiagWin) {
+                return _getWinScore(board, _boardSideLength-1, depth);
+            }
+        }
+        
+        // check for draw
+        if(board.getEmptyCells().length === 0) {
+            return {score: 0, isGameFinished: true};
+        }
+
+        // 0 for nothing
+        return {score: 0, isGameFinished: false};
+    };
+
+    const _minimax = (board, depth, isMaximizer)=> {
+        const result = _evaluate(board, depth);
+        //console.log(score);
+        if(result.isGameFinished) {
+            return {score: result.score};
+        }
+
+        const scores = [];
+        const emptyCells = board.getEmptyCells();
+        emptyCells.forEach(cellIndex => {
+            board.setCell(cellIndex, (isMaximizer?'X':'O'));
+            scores.push({index: cellIndex, score: _minimax(board, depth+1, !isMaximizer).score});
+            board.setCellEmpty(cellIndex);
+        });
+        if(depth === 0) {
+            console.log(scores);
+            console.log(isMaximizer);
+        }
+
+        if(isMaximizer) {
+            return scores.reduce( (maxi, score) => {
+                return (score.score > maxi.score)? score: maxi;
+            });
+        }
+        else {
+            return scores.reduce( (mini, score) => {
+                return (score.score < mini.score)? score: mini;
+            });
+        }
+    };
+
+    const findBestMove = (board, isMaximizer)=> {
+        return _minimax(board, 0, isMaximizer);
+    }
+
+    return {
+        findBestMove
+    };
+})('X');
 
 DisplayController.init();
 
