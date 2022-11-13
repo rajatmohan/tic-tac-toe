@@ -196,7 +196,7 @@ const MiniMaxi = ((maximizerSign)=> {
     };
 });
 
-const PlayerAI = (name, sign, aiPrecision, isMaximizer)=> {
+const PlayerAI = (name, sign, aiPrecision = 0.5, isMaximizer = false)=> {
     let _player = Player(name, sign);
     let _aiPrecision = aiPrecision;
     let _isMaximizer = isMaximizer;
@@ -237,11 +237,14 @@ const PlayerAI = (name, sign, aiPrecision, isMaximizer)=> {
 
     const findBestMove = (board, miniMaxi) => {
         const accuracy = Math.random();
-        console.log(accuracy);
         if(accuracy < _aiPrecision) {
             return _miniMaxMove(board, miniMaxi);
         }
         return _randomMove(board);
+    }
+
+    const isPlayerAi = ()=> {
+        return true;
     }
 
     return {
@@ -249,6 +252,7 @@ const PlayerAI = (name, sign, aiPrecision, isMaximizer)=> {
         setAiPrecision,
         getAiPrecision,
         findBestMove,
+        isPlayerAi,
     }
 
 };
@@ -257,7 +261,7 @@ const GameController = ((boardSideLength)=> {
     const _boardSideLength = boardSideLength;
     let _state = 'GAME_NOT_STARTED';
 
-    let _playerList = [PlayerAI('Player 1', 'X'), PlayerAI('Player 2', 'O')];
+    let _playerList = [PlayerAI('Player 1', 'X', 1, true), PlayerAI('Player 2', 'O', 1, false)];
     let _currentPlayer = _playerList[0];
 
     let _board = GameBoard(boardSideLength);
@@ -377,6 +381,20 @@ const GameController = ((boardSideLength)=> {
         return _state === "GAME_DRAW"? true: false;
     }
 
+    const isCurrentPlayerAI = () => {
+        if(typeof _currentPlayer.isPlayerAi === 'function') {
+            return true;
+        }
+        return false;
+    }
+
+    const playAIMove = () => {
+        if(isCurrentPlayerAI()) {
+            return _currentPlayer.findBestMove(_board, _miniMaxi);
+        }
+        return -1;
+    }
+
     return {
         getAllPlayers,
         getCurrentPlayer,
@@ -385,6 +403,8 @@ const GameController = ((boardSideLength)=> {
         restartButtonClicked,
         isGameDraw,
         isGameWon,
+        isCurrentPlayerAI,
+        playAIMove,
     };
     
 })(boardSideLength);
@@ -397,11 +417,21 @@ const DisplayController = (
         const _startButton = document.querySelector("#startButton");
         const _gameEndMessageDiv = document.querySelector("#gameEndMessageModal");
         const _gameEndMessage = document.querySelector("#gameEndMessage");
-        const __gameEndMessageCloseBtn = _gameEndMessageDiv.querySelector(".close");
+        const _gameEndMessageCloseBtn = _gameEndMessageDiv.querySelector(".close");
 
         // Game end message modal close button functionality
-        __gameEndMessageCloseBtn.onclick = () => {
+        _gameEndMessageCloseBtn.onclick = () => {
             _gameEndMessageDiv.style.display = "none";
+        }
+
+        const _removeClickListenerOnBoardCells = () => {
+            const _cells = document.querySelectorAll(".board-cell");
+            Array.from(_cells).forEach(cell => cell.removeEventListener('click', _playerClick));
+        }
+
+        const _addClickListenerOnBoardCells = () => {
+            const _cells = document.querySelectorAll(".board-cell");
+            Array.from(_cells).forEach(cell => cell.addEventListener('click', _playerClick));
         }
 
         const _hightLightCurrentPlayer = ()=>{
@@ -414,6 +444,19 @@ const DisplayController = (
                     child.classList.remove("player-active");
                 }
             });
+
+            if(GameController.isCurrentPlayerAI()) {
+                // diable onclick on board cells;
+                _removeClickListenerOnBoardCells();
+                const index = GameController.playAIMove();
+                if(index >= 0) {
+                    setTimeout(_playerMove, 1000, index);
+                }
+            }
+            else {
+                // enable on click on board cells;
+                _addClickListenerOnBoardCells();
+            }
         };
 
         const _winnerDisplay = (player)=> {
@@ -426,8 +469,7 @@ const DisplayController = (
             _gameEndMessage.textContent = `Draw`;
         }
 
-        const _playerClick = (e)=> {
-            let index = parseInt(e.target.dataset.index)
+        const _playerMove = (index) => {
             if(index >= 0) {
                 let sign = GameController.getCurrentPlayer().getSign();
                 if(GameController.playerClick(index)) {
@@ -445,13 +487,17 @@ const DisplayController = (
                     }
                 }
             }
+        }
+
+        const _playerClick = (e)=> {
+            let index = parseInt(e.target.dataset.index);
+            _playerMove(index);
         };
 
         const _makeCell = (index)=> {
             const cell = document.createElement('div');
             cell.classList.add("board-cell")
             cell.dataset.index = index;
-            cell.addEventListener('click', _playerClick);
             return cell;
         };
 
@@ -505,6 +551,7 @@ const DisplayController = (
             for(let i = 0; i < _boardSideLength*_boardSideLength; i++) {
                 _board.appendChild(_makeCell(i));
             }
+
             _startButton.addEventListener('click', _startButtonClicked);
 
             // create player info
