@@ -66,22 +66,33 @@ header {
     align-items: center;
 }
 
-.player-info {
+.player-container {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 10px;
+}
+
+.player-info, .player-type {
     text-align: center;
     width: 20ch;
     border: 1px solid black;
-    padding: 4px;
     font-size: 18px;
-    margin: 10px;
+    padding: 4px;
     border-radius: 4px;
     color: whitesmoke;
     background-color: #d63384;
 }
 
-.player-active {
-    transform: scale(1.2);
-    color: lightcoral;
+.player-type {
+    width: 100%;
 }
+
+.player-active > * {
+    transform: scale(1.2);
+}
+
 
 .modal {
     display: none;

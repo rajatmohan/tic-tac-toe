@@ -261,14 +261,28 @@ const GameController = ((boardSideLength)=> {
     const _boardSideLength = boardSideLength;
     let _state = 'GAME_NOT_STARTED';
 
-    let _playerList = [PlayerAI('Player 1', 'X', 1, true), PlayerAI('Player 2', 'O', 1, false)];
-    let _currentPlayer = _playerList[0];
+    let _playerList = [Player('Player 1', 'X'), Player('Player 2', 'O')];
+    let _currentPlayer = 0;
 
     let _board = GameBoard(boardSideLength);
-    let _miniMaxi = MiniMaxi(_currentPlayer.getSign());
+    let _miniMaxi = MiniMaxi(_playerList[0].getSign());
+
+    const _playerTypes = [
+        {
+            desp: "Manual",
+        },
+        {
+            desp: "AI (50-50)",
+            aiPrecision: 0.5,
+        },
+        {
+            desp: "AI (Unbeatable)",
+            aiPrecision: 1,
+        }
+    ];
 
     const _toggleTurn = ()=> {
-        _currentPlayer = (_currentPlayer === _playerList[0])? _playerList[1]: _playerList[0];
+        _currentPlayer = 1 - _currentPlayer;
     };
 
     const _checkWinConditionRow = (index) => {
@@ -340,7 +354,7 @@ const GameController = ((boardSideLength)=> {
     };
 
     const playerClick = (index) => {
-        if(_state === "GAME_STARTED" && _board.setCell(index, _currentPlayer.getSign())) {
+        if(_state === "GAME_STARTED" && _board.setCell(index, getCurrentPlayer().getSign())) {
             if(_checkGameWinCondition(index)) {
                 _state = "GAME_WON";
             }
@@ -360,7 +374,7 @@ const GameController = ((boardSideLength)=> {
     };
 
     const getCurrentPlayer = ()=> {
-        return _currentPlayer;
+        return _playerList[_currentPlayer];
     };
 
     const startButtonClicked = ()=> {
@@ -369,7 +383,7 @@ const GameController = ((boardSideLength)=> {
 
     const restartButtonClicked = ()=> {
         _state = "GAME_STARTED";
-        _currentPlayer = _playerList[0];
+        _currentPlayer = 0;
         _board.reset();
     }
 
@@ -382,7 +396,7 @@ const GameController = ((boardSideLength)=> {
     }
 
     const isCurrentPlayerAI = () => {
-        if(typeof _currentPlayer.isPlayerAi === 'function') {
+        if(typeof getCurrentPlayer().isPlayerAi === 'function') {
             return true;
         }
         return false;
@@ -390,10 +404,27 @@ const GameController = ((boardSideLength)=> {
 
     const playAIMove = () => {
         if(isCurrentPlayerAI()) {
-            return _currentPlayer.findBestMove(_board, _miniMaxi);
+            return getCurrentPlayer().findBestMove(_board, _miniMaxi);
         }
         return -1;
     }
+
+    const getPlayerTypes = () => {
+        return _playerTypes;
+    }
+
+    const setPlayerType = (playerSign, playerTypeDesc) => {
+        let playerIndex = 0;
+        if(playerSign === _playerList[1].getSign()) {
+            playerIndex = 1;
+        }
+        const playerType = _playerTypes.find(playerType => playerType.desp === playerTypeDesc);
+        if ("aiPrecision" in playerType) {
+            _playerList[playerIndex] = PlayerAI(_playerList[playerIndex].getName(), _playerList[playerIndex].getSign(), playerType.aiPrecision, (playerIndex === 0)?true:false);
+        } else {
+            _playerList[playerIndex] = Player(_playerList[playerIndex].getName(), _playerList[playerIndex].getSign());
+        }
+    };
 
     return {
         getAllPlayers,
@@ -405,6 +436,8 @@ const GameController = ((boardSideLength)=> {
         isGameWon,
         isCurrentPlayerAI,
         playAIMove,
+        getPlayerTypes,
+        setPlayerType,
     };
     
 })(boardSideLength);
@@ -419,6 +452,7 @@ const DisplayController = (
         const _gameEndMessage = document.querySelector("#gameEndMessage");
         const _gameEndMessageCloseBtn = _gameEndMessageDiv.querySelector(".close");
 
+        const _playerTypes = GameController.getPlayerTypes();
         // Game end message modal close button functionality
         _gameEndMessageCloseBtn.onclick = () => {
             _gameEndMessageDiv.style.display = "none";
@@ -434,8 +468,18 @@ const DisplayController = (
             Array.from(_cells).forEach(cell => cell.addEventListener('click', _playerClick));
         }
 
+        const _disablePlayerInfo = () => {
+            Array.from(document.querySelectorAll(".player-info")).forEach(player => player.disabled = true);
+            Array.from(document.querySelectorAll(".player-type")).forEach(player => player.disabled = true);
+        }
+
+        const _enablePlayerInfo = () => {
+            Array.from(document.querySelectorAll(".player-info")).forEach(player => player.disabled = false);
+            Array.from(document.querySelectorAll(".player-type")).forEach(player => player.disabled = false);
+        }
+
         const _hightLightCurrentPlayer = ()=>{
-            let currentPlayer = GameController.getCurrentPlayer()
+            let currentPlayer = GameController.getCurrentPlayer();
             Array.from(_playerInfo.children).forEach(child => {
                 if(child.dataset.sign === currentPlayer.getSign()) {
                     child.classList.add("player-active");
@@ -462,11 +506,17 @@ const DisplayController = (
         const _winnerDisplay = (player)=> {
             _gameEndMessageDiv.style.display = "block";
             _gameEndMessage.textContent = `${player.getName()} Won !`;
+            _gameEnd();
         }
 
         const _drawDisplay = ()=> {
             _gameEndMessageDiv.style.display = "block";
             _gameEndMessage.textContent = `Draw`;
+            _gameEnd();
+        }
+
+        const _gameEnd = ()=> {
+            _enablePlayerInfo();
         }
 
         const _playerMove = (index) => {
@@ -502,21 +552,43 @@ const DisplayController = (
         };
 
         const _editPlayerNameKeyUp = (e)=> {
-            let playerEdited = GameController.getAllPlayers().filter(player => player.getSign() === e.target.dataset.sign);    
+            let playerEdited = GameController.getAllPlayers().filter(player => player.getSign() === e.target.parentElement.dataset.sign);    
             if(playerEdited.length == 1) {
                 playerEdited[0].setName(e.target.value);
             }
         }
 
+        const _editPlayerType = (e) => {
+            GameController.setPlayerType(e.target.parentElement.dataset.sign, e.target.value);    
+        };
+
         const _makePlayerInfo = (player)=> {
+            const playerDiv = document.createElement('div');
+            playerDiv.classList.add('player-container');
+            playerDiv.dataset.sign = player.getSign();
+            
             const playerName = document.createElement('input');
             playerName.classList.add("player-info");
             playerName.setAttribute("maxLength", 15);
             playerName.setAttribute("size", 20);
-            playerName.dataset.sign = player.getSign();
             playerName.value = `${player.getName()}`;
             playerName.onkeyup = _editPlayerNameKeyUp;
-            return playerName;
+
+            const playerType = document.createElement('select');
+            playerType.classList.add("player-type");
+            
+            _playerTypes.forEach(type => {
+                const opt = document.createElement('option');
+                opt.text = type.desp;
+                opt.value = type.desp;
+                playerType.appendChild(opt);
+            });
+            playerType.onchange = _editPlayerType;
+
+            
+            playerDiv.appendChild(playerName);
+            playerDiv.appendChild(playerType);
+            return playerDiv;
         }
 
         const _startButtonClicked = (event)=> {
@@ -530,7 +602,7 @@ const DisplayController = (
                 GameController.restartButtonClicked();
                 _reset();
             }
-
+            _disablePlayerInfo();
             _hightLightCurrentPlayer();
         }
 
