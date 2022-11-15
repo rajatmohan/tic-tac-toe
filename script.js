@@ -281,7 +281,7 @@ const GameController = ((boardSideLength)=> {
 
     const _playerTypes = [
         {
-            desp: "Manual",
+            desp: "Player",
         },
         {
             desp: "AI (50-50)",
