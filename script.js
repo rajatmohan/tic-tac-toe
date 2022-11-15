@@ -241,7 +241,6 @@ const PlayerAI = (name, sign, aiPrecision = 0.5, isMaximizer = false)=> {
 
         if(emptyCells.length > 0) {
             const allBestMoves = mimiMaxi.findBestMove(board, _isMaximizer).indexList;
-            console.log(allBestMoves);
             return allBestMoves[_generateRandom(allBestMoves.length)];
         }
 
