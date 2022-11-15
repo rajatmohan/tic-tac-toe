@@ -80,9 +80,10 @@ const GameBoard = (
     }
 );
 
-const MiniMaxi = ((maximizerSign)=> {
+const MiniMaxi = ((maximizerSign, minimizerSign)=> {
     const PLAYER_SCORE = 10;
     const _maximizerSign = maximizerSign;
+    const _minimizerSign = minimizerSign;
 
     const _getWinScore = (board, index, depth) => {
         const score = PLAYER_SCORE - depth;
@@ -164,26 +165,36 @@ const MiniMaxi = ((maximizerSign)=> {
         const result = _evaluate(board, depth);
 
         if(result.isGameFinished) {
-            return {score: result.score};
+            return {score: result.score, indexList:[]};
         }
 
         const scores = [];
         const emptyCells = board.getEmptyCells();
         emptyCells.forEach(cellIndex => {
-            board.setCell(cellIndex, (isMaximizer?'X':'O'));
-            scores.push({index: cellIndex, score: _minimax(board, depth+1, !isMaximizer).score});
+            board.setCell(cellIndex, (isMaximizer?_maximizerSign:_minimizerSign));
+            scores.push({
+                index: cellIndex, 
+                score: _minimax(board, depth+1, !isMaximizer).score
+            });
             board.setCellEmpty(cellIndex);
         });
 
         if(isMaximizer) {
-            return scores.reduce( (maxi, score) => {
-                return (score.score > maxi.score)? score: maxi;
-            });
+            const maximumScore = Math.max(...scores.map(score => score.score));
+            return {
+                score: maximumScore, 
+                indexList: scores.filter(score => score.score === maximumScore)
+                    .map(score => score.index),
+            };
         }
         else {
-            return scores.reduce( (mini, score) => {
-                return (score.score < mini.score)? score: mini;
-            });
+            const minimumScore = Math.min(...scores.map(score => score.score));
+
+            return {
+                score: minimumScore, 
+                indexList: scores.filter(score => score.score === minimumScore)
+                    .map(score => score.index),
+            };
         }
     };
 
@@ -229,7 +240,9 @@ const PlayerAI = (name, sign, aiPrecision = 0.5, isMaximizer = false)=> {
         const emptyCells = board.getEmptyCells();
 
         if(emptyCells.length > 0) {
-            return mimiMaxi.findBestMove(board, _isMaximizer).index;
+            const allBestMoves = mimiMaxi.findBestMove(board, _isMaximizer).indexList;
+            console.log(allBestMoves);
+            return allBestMoves[_generateRandom(allBestMoves.length)];
         }
 
         return -1;
@@ -265,7 +278,7 @@ const GameController = ((boardSideLength)=> {
     let _currentPlayer = 0;
 
     let _board = GameBoard(boardSideLength);
-    let _miniMaxi = MiniMaxi(_playerList[0].getSign());
+    let _miniMaxi = MiniMaxi(_playerList[0].getSign(), _playerList[1].getSign());
 
     const _playerTypes = [
         {
