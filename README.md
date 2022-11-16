@@ -11,4 +11,4 @@ Game Features:
     Computer can also play among themselves.
     User can also edit name of player.
 
-Demo: https://rajatmohan.github.io/tic-tac-toe/̌
+Demo: https://rajatmohan.github.io/tic-tac-toe/
